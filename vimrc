@@ -81,6 +81,24 @@ nnoremap <Leader>gc :Git commit -m ''<Left>
 nnoremap <Leader>gp :Git pull origin main
 nnoremap <Leader>GP :Git push origin main
 
+" adding git branch to status line 
+" -------------------------------
+"
+" Function to get current git branch
+function! GitBranch()
+  return system("git branch --show-current 2>/dev/null | tr -d '\n'")
+endfunction
+
+" Set up the status line
+set statusline=
+set statusline+=%f " File name
+set statusline+=%h%m%r " Indicate if file is [Help], modified, or read-only
+set statusline+=%= " Left/Right split
+set statusline+=%{GitBranch()}\ \  " Git branch
+set statusline+=%-14.(%l,%c%V%) " Line and column number
+set statusline+=%< " Truncate if necessary
+set laststatus=2
+
 " this is the left file tree & layout
 " -----------------------------------
 " let g:netrw_banner = 0
@@ -94,13 +112,36 @@ nnoremap <Leader>GP :Git push origin main
 "augroup END
 
 
+
+" this is setting leader d (\d) to rm -rf the directory under the cursor in
+" newtrw
+"
+
+function! NetrwDeleteDir()
+    let l:dir = expand('%:p') . getline('.')
+    if isdirectory(l:dir)
+        call system('rm -rf ' . l:dir)
+        echo "Deleted directory: " . l:dir
+		execute "normal! :e\<CR>"
+    else
+        echo "Not a directory: " . l:dir
+    endif
+endfunction
+
+augroup NetrwMappings
+    autocmd!
+    autocmd FileType netrw nnoremap <buffer> <Leader>d :call NetrwDeleteDir()<CR>
+augroup END
+
+
+
 call plug#begin()
 
 " search highlights
 Plug 'haya14busa/is.vim'
 
 " visual * search
-Plug 'nelstrom/vim-visual-search'
+" Plug 'nelstrom/vim-visual-search'
 
 "Integrate fzf with Vim.
 Plug '~/.fzf'
@@ -111,5 +152,11 @@ Plug 'mhinz/vim-grepper'
 
 " Automatically show Cim's complete menu while typing
 " Plug 'vim-scripts/AutoComplPop'
+
+" Vim Diff Directories
+Plug 'will133/vim-dirdiff'
+
+" Vim Git
+Plug 'tpope/vim-fugitive'
 
 call plug#end()
