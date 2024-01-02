@@ -133,7 +133,14 @@ augroup NetrwMappings
     autocmd FileType netrw nnoremap <buffer> <Leader>d :call NetrwDeleteDir()<CR>
 augroup END
 
+" converting px to vw
+function! ConvertPxToVw(pxValue)
+    let viewportWidth = 1920.0  " Ensure this is a float
+    let vwValue = (str2float(a:pxValue) / viewportWidth) * 100
+    return printf("%.4fvw", vwValue)
+endfunction
 
+nnoremap <Leader>vw :%s/\(\d\+\)px/\=ConvertPxToVw(submatch(1))/gc<CR>
 
 call plug#begin()
 
