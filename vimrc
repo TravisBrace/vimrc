@@ -116,7 +116,6 @@ set laststatus=2
 " this is setting leader d (\d) to rm -rf the directory under the cursor in
 " newtrw
 "
-
 function! NetrwDeleteDir()
     let l:dir = expand('%:p') . getline('.')
     if isdirectory(l:dir)
@@ -137,10 +136,13 @@ augroup END
 function! ConvertPxToVw(pxValue)
     let viewportWidth = 1920.0  " Ensure this is a float
     let vwValue = (str2float(a:pxValue) / viewportWidth) * 100
-    return printf("%.4fvw", vwValue)
+    return printf("%.2fvw", vwValue)
 endfunction
 
-nnoremap <Leader>vw :%s/\(\d\+\)px/\=ConvertPxToVw(submatch(1))/gc<CR>
+nnoremap <Leader>vw :.,$s/\(\d\+\)px/\=ConvertPxToVw(submatch(1))/gc<CR>
+
+" this fixes copying and pasting files in netrw for linux
+let g:netrw_keepdir = 0
 
 call plug#begin()
 
