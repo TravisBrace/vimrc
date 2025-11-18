@@ -1,8 +1,10 @@
 "Sets numbers n the left side
+
 set rnu
 set nu
 
 "Setting Tab Width
+set expandtab
 set tabstop=4
 set softtabstop=4
 set shiftwidth=4
@@ -31,16 +33,62 @@ xnoremap <silent> s* "sy:let @/=@s<CR>cgn
 " FUZZY FIND SETTINGS
 " ----------------
 
+" Map to invoke fzf tabs search with Ctrl + W
+nnoremap <Leader>w :Windows<CR>
+
+" Map to invoke fzf file search with Ctrl + P
+nnoremap <silent> <C-p> :Files<CR>
+
+" Map to call FzfFiles for searching and populating the quickfix list
+nnoremap <silent> <Leader>f :call FzfFiles()<CR>
+
+" Function to search files using fzf and populate the quickfix list
+function! FzfFiles()
+  " Use ripgrep to get the list of files and pipe to fzf with multi-selection
+  let l:cmd = 'rg --files --hidden | fzf --multi ' .
+    \ '--preview "bat --style=numbers --color=always --wrap=character {}" ' .
+    \ '--preview-window=right,50%,wrap'
+  let l:files = systemlist(l:cmd)
+
+  " Check if fzf returned any files
+  if len(l:files) > 0
+    " Ensure paths are absolute
+    let l:abs_files = map(l:files, 'fnamemodify(v:val, ":p")')
+
+    " Debug: Echo the absolute file paths to check
+    echo "Absolute file paths:"
+    echo l:abs_files
+
+    " Clear the current quickfix list
+    call setqflist([], 'r')
+
+    " Populate the quickfix list with absolute paths of selected files
+    call setqflist(l:abs_files, 'r')
+
+    " Manually open the quickfix list
+    copen
+
+    " Debug: Check if quickfix list is populated
+    echo "Quickfix list populated:"
+    echo getqflist()
+
+    " Go to the first file in the quickfix list
+    cfirst
+  endif
+endfunction
+
+
+"PREVIOUS SETTINGS 
 " Launch fzf with CTRL+P
-nnoremap <silent> <C-p> :FZF -m<CR>
+"nnoremap <silent> <C-p> :FZF -m<CR>
 
 " Map a few common things to do with FZF.
-nnoremap <silent> <Leader><Enter> :Buffers<CR>
-nnoremap <silent> <Leader>l :Lines<CR>
+"nnoremap <silent> <Leader><Enter> :Buffers<CR>
+"nnoremap <silent> <Leader>l :Lines<CR>
 
 " Allow passing optional flags into the Rg command.
 "     Example:   :Rg myterm -g '*.md'
-command! -bang -nargs=* RG call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case " . <q-args>, 1, <bang>0)
+"command! -bang -nargs=* RG call fzf#vim#grep("rg --column --line-number --no-heading --color=always --smart-case " . <q-args>, 1, <bang>0)
 
 
 " Vim Grepper 
@@ -142,7 +190,11 @@ endfunction
 nnoremap <Leader>vw :.,$s/\(\d\+\)px/\=ConvertPxToVw(submatch(1))/gc<CR>
 
 " this fixes copying and pasting files in netrw for linux
-let g:netrw_keepdir = 0
+" but it also fixed project folder persistence for ripgrep and fzf
+" let g:netrw_keepdir = 0
+
+" Force .html files to be treated as liquid (optional if you want better highlighting)
+autocmd BufRead,BufNewFile *.html set filetype=liquid.html
 
 call plug#begin()
 
@@ -168,4 +220,35 @@ Plug 'will133/vim-dirdiff'
 " Vim Git
 Plug 'tpope/vim-fugitive'
 
+" VIM Markdown
+Plug 'preservim/vim-markdown'
+
+" YML plugin highlighting
+Plug 'stephpy/vim-yaml'
+
+" syntax for liquid
+Plug 'tpope/vim-liquid'
+
 call plug#end()
+
+
+" Vim markdown highlighting
+syntax on
+
+" Recognize YAML front matter in Markdown files
+autocmd BufRead,BufNewFile *.md syntax match yamlFrontMatter /^---$/ containedin=ALL
+autocmd BufRead,BufNewFile *.md syntax region yamlFrontMatter start=/^---$/ end=/^---$/ keepend contains=ALL
+" Link YAML syntax highlighting to the yamlFrontMatter region
+syntax include @yaml syntax/yaml.vim
+syntax region yamlFrontMatter start=/^---$/ end=/^---$/ contains=@yaml keepend
+
+set foldlevelstart=99
+
+" Define a function to open Cursor Agent in a vertical split
+function! OpenCursorAgentVert()
+  vert terminal cursor-agent
+  vertical resize 40
+endfunction
+
+" Map it to <leader>ca (or any key combo you like)
+nnoremap <leader>ca :call OpenCursorAgentVert()<CR>
